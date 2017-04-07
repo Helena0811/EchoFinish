@@ -65,7 +65,7 @@ public class ServerMain extends JFrame implements ActionListener{
 		
 		// Checked Exception		문법상 오류가 없지만 에러 발생 가능성이 있는 예외, compile time에 고려
 		// RunTime Exception	강요하지 않는 예외, runtime 시 고려
-		// 런타임 예외, 컴파일 전에 강제 예외 처리가 되지 않음. 방치됨!\
+		// 런타임 예외, 컴파일 전에 강제 예외 처리가 되지 않음. 방치됨!
 		/*
 		 * 예외 종류
 		 * 1. Checked Exception

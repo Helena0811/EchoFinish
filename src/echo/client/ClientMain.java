@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -35,7 +37,7 @@ public class ClientMain extends JFrame implements ItemListener, ActionListener{
 	JButton bt_connect;
 	JTextArea area;
 	JScrollPane scroll;
-	JTextField t_text;
+	JTextField t_input;
 	
 	int port=7777;
 	
@@ -49,6 +51,9 @@ public class ClientMain extends JFrame implements ItemListener, ActionListener{
 	BufferedReader buffr;
 	BufferedWriter buffw;
 	
+	// 실행부인 메인 쓰레드 대신 실행될 쓰레드
+	ClientThread ct;
+	
 	public ClientMain() {
 		
 		manager=DBManager.getInstance();
@@ -59,7 +64,7 @@ public class ClientMain extends JFrame implements ItemListener, ActionListener{
 		bt_connect=new JButton("연결");
 		area=new JTextArea();
 		scroll=new JScrollPane(area);
-		t_text=new JTextField(20);
+		t_input=new JTextField(20);
 		
 		p_north.add(choice);
 		p_north.add(t_port);
@@ -67,7 +72,7 @@ public class ClientMain extends JFrame implements ItemListener, ActionListener{
 		
 		add(p_north,BorderLayout.NORTH);
 		add(scroll);
-		add(t_text,BorderLayout.SOUTH);
+		add(t_input,BorderLayout.SOUTH);
 		
 		loadIP();
 		
@@ -76,6 +81,34 @@ public class ClientMain extends JFrame implements ItemListener, ActionListener{
 		}
 		bt_connect.addActionListener(this);
 		choice.addItemListener(this);
+		t_input.addKeyListener(new KeyAdapter() {
+			public void keyReleased(KeyEvent e) {
+			 int key=e.getKeyCode();
+			 if(key==KeyEvent.VK_ENTER){
+				 /*
+				  * 쓰레드 이용 안하면
+				  * String msg=t_input.getText();
+				  * send(msg);
+				  * 
+				  * // 보내기
+				  * ct.send(t_input.getText());
+				  * // 입력한 글씨 지우기
+				  * t_input.setText("");
+				  * 
+				  * // 엔터 치면 다시 받아오는 것이 아니라 언제나 받아옴 
+				  * listen();
+				  * 
+				 */
+				 
+				 // 보내기(ClientThread가 수행)
+				 ct.send(t_input.getText());
+				 
+				 // 입력한 글씨 지우기
+				 t_input.setText("");
+	 
+			 }
+			}
+		});
 		
 		setBounds(950, 100, 300, 400);
 		setVisible(true);
@@ -124,6 +157,7 @@ public class ClientMain extends JFrame implements ItemListener, ActionListener{
 					e.printStackTrace();
 				}
 			}
+			// 접속 끊기
 			manager.disConnect(con);
 		}
 	}
@@ -140,8 +174,15 @@ public class ClientMain extends JFrame implements ItemListener, ActionListener{
 			buffr=new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			buffw=new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 			
-			buffw.write("안녕?\n");
-			buffw.flush();
+			// ClientThread가 실시간 청취 시작
+			// 현재 사용되는 socket과 받은 메시지를 출력할 area를 인수로 넣기
+			ct=new ClientThread(socket, area);
+			
+			// ClientThread 실행
+			ct.start();
+			
+			// 보내는 메소드도 외부 쓰레드(동생)인 ClientThread가 수행
+			ct.send("안녕?");
 			
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
@@ -161,7 +202,6 @@ public class ClientMain extends JFrame implements ItemListener, ActionListener{
 		this.setTitle(chat.getIp());
 		
 		ip=chat.getIp();	// 멤버변수 ip에 대입
-
 	}
 	
 	// 접속 버튼을 누르면 접속
