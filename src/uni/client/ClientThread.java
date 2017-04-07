@@ -49,11 +49,17 @@ public class ClientThread extends Thread{
 	
 	// ¹Þ±â(µè±â)
 	public void listen(){
+		String msg=null;
+		try {
+			msg=buffr.readLine();
+			area.append(msg);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
 	public void run() {
-		
 		
 	}
 	
